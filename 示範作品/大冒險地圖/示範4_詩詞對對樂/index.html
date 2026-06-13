@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>詩詞對對樂</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #20160d;
+      --muted: #7b6544;
+      --paper: #fff5d1;
+      --paper-deep: #e8c878;
+      --cinnabar: #ad3c2d;
+      --green: #297748;
+      --blue: #2f6f93;
+      --shadow: rgba(54, 35, 18, 0.24);
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(255, 248, 214, 0.9), transparent 22rem),
+        radial-gradient(circle at 82% 16%, rgba(117, 163, 194, 0.24), transparent 22rem),
+        repeating-linear-gradient(36deg, rgba(110, 76, 36, 0.045) 0 1px, transparent 1px 18px),
+        linear-gradient(135deg, #efdca5 0%, #fff3c3 46%, #dec16f 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(rgba(78, 54, 26, 0.13) 0.8px, transparent 0.8px),
+        radial-gradient(rgba(255, 255, 255, 0.28) 0.8px, transparent 0.8px);
+      background-position: 0 0, 12px 14px;
+      background-size: 28px 28px;
+      mix-blend-mode: multiply;
+      opacity: 0.55;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    .app {
+      position: relative;
+      width: min(1160px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 2px solid rgba(125, 57, 29, 0.24);
+    }
+
+    h1 {
+      margin: 0;
+      color: #733018;
+      font-size: clamp(2.4rem, 5vw, 4.6rem);
+      line-height: 1;
+      letter-spacing: 0;
+      text-shadow: 0 2px 0 rgba(255, 248, 216, 0.92), 0 12px 24px rgba(76, 48, 20, 0.16);
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      font-weight: 700;
+    }
+
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 14px;
+      border: 2px solid rgba(115, 48, 24, 0.38);
+      border-radius: 8px;
+      color: #733018;
+      background: rgba(255, 246, 213, 0.82);
+      box-shadow: 0 10px 22px var(--shadow);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 18px;
+      padding-top: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 2px solid rgba(125, 57, 29, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 248, 220, 0.76);
+      box-shadow: 0 18px 34px var(--shadow), inset 0 0 0 4px rgba(255, 255, 255, 0.22);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(125, 57, 29, 0.18);
+      background: rgba(255, 252, 235, 0.58);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      color: #733018;
+      font-size: 1.25rem;
+    }
+
+    .score {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .poem-bank {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 14px;
+      min-height: 540px;
+    }
+
+    .poem-card {
+      min-height: 142px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      border: 2px solid #b78335;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 235, 0.98), rgba(242, 216, 147, 0.96)),
+        var(--paper);
+      box-shadow: 0 12px 22px rgba(82, 53, 21, 0.16);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    .poem-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 26px rgba(82, 53, 21, 0.2);
+    }
+
+    .poem-card.dragging {
+      opacity: 0.58;
+    }
+
+    .poem-card.correct {
+      border-color: var(--green);
+      background: linear-gradient(180deg, #edfff1, #bde9c8);
+      cursor: default;
+    }
+
+    .verse {
+      font-size: clamp(1.35rem, 3.2vw, 2rem);
+      line-height: 1.28;
+      font-weight: 900;
+      color: #3d2712;
+    }
+
+    .source {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .author-list {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .author-slot {
+      min-height: 86px;
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      padding: 12px;
+      border: 2px dashed rgba(65, 45, 25, 0.32);
+      border-radius: 8px;
+      background: rgba(255, 252, 235, 0.72);
+      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
+
+    .author-slot.over {
+      border-color: var(--blue);
+      background: #e9f5ff;
+    }
+
+    .author-slot.correct {
+      border-style: solid;
+      border-color: var(--green);
+      background: #e4ffe9;
+    }
+
+    .author-slot.wrong {
+      animation: wrongFlash 0.34s ease;
+    }
+
+    .author {
+      color: #733018;
+      font-size: 1.32rem;
+      font-weight: 900;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .message {
+      margin: 14px 0 0;
+      min-height: 30px;
+      color: #733018;
+      font-size: 1.08rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(37, 24, 13, 0.58);
+    }
+
+    .overlay.show {
+      display: grid;
+    }
+
+    .finish-box {
+      width: min(560px, 100%);
+      padding: 28px;
+      border: 3px solid #b78335;
+      border-radius: 8px;
+      background: #fff6d7;
+      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.34);
+      text-align: center;
+    }
+
+    .finish-box h2 {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1;
+    }
+
+    .finish-box p {
+      margin: 8px 0;
+      color: #4c351c;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .action-btn {
+      min-height: 42px;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff9df;
+      background: #733018;
+      cursor: pointer;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .drag-ghost {
+      position: fixed;
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0.92;
+      transform: translate(-50%, -50%) scale(0.92);
+      width: min(280px, 72vw);
+    }
+
+    @keyframes wrongFlash {
+      0%,
+      100% {
+        border-color: rgba(65, 45, 25, 0.32);
+        background: rgba(255, 252, 235, 0.72);
+        transform: translateX(0);
+      }
+      25%,
+      75% {
+        border-color: var(--cinnabar);
+        background: #ffd9d2;
+        transform: translateX(-5px);
+      }
+      50% {
+        transform: translateX(5px);
+      }
+    }
+
+    @media (max-width: 880px) {
+      header,
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .map-link {
+        justify-self: start;
+      }
+
+      .poem-bank {
+        grid-template-columns: 1fr;
+        min-height: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>詩詞對對樂</h1>
+        <p class="subtitle">把詩句拖到正確作者旁，完成經典詩詞配對。</p>
+      </div>
+      <a class="map-link" href="../index.html">← 回到大地圖</a>
+    </header>
+
+    <main>
+      <section class="panel" aria-label="詩句卡">
+        <div class="panel-head">
+          <h2>詩句</h2>
+          <span class="score">已配對 <b id="matchedCount">0</b> / <b id="totalCount">0</b></span>
+        </div>
+        <div class="poem-bank" id="poemBank"></div>
+      </section>
+
+      <section class="panel" aria-label="作者欄">
+        <div class="panel-head">
+          <h2>作者</h2>
+          <span class="score">嘗試 <b id="attemptCount">0</b> 次</span>
+        </div>
+        <div class="author-list" id="authorList"></div>
+      </section>
+    </main>
+
+    <p class="message" id="message">選一張詩句卡，拖到對應作者。</p>
+  </div>
+
+  <div class="overlay" id="finishOverlay" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+    <div class="finish-box">
+      <h2 id="finishTitle">完成配對！</h2>
+      <p id="finishText">你把詩詞與作者全部配對成功。</p>
+      <p id="finishScore"></p>
+      <div class="actions">
+        <button class="action-btn" id="restartButton" type="button">再玩一次</button>
+        <a class="action-btn" href="../index.html">回到大地圖</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const poems = [
+      { id: "li-bai", author: "李白", verse: "床前明月光，疑是地上霜。", source: "《靜夜思》" },
+      { id: "du-fu", author: "杜甫", verse: "國破山河在，城春草木深。", source: "《春望》" },
+      { id: "wang-wei", author: "王維", verse: "空山新雨後，天氣晚來秋。", source: "《山居秋暝》" },
+      { id: "bai-juyi", author: "白居易", verse: "野火燒不盡，春風吹又生。", source: "《賦得古原草送別》" },
+      { id: "li-qingzhao", author: "李清照", verse: "尋尋覓覓，冷冷清清。", source: "《聲聲慢》" },
+      { id: "su-shi", author: "蘇軾", verse: "但願人長久，千里共嬋娟。", source: "《水調歌頭》" }
+    ];
+
+    const poemBank = document.querySelector("#poemBank");
+    const authorList = document.querySelector("#authorList");
+    const matchedCount = document.querySelector("#matchedCount");
+    const totalCount = document.querySelector("#totalCount");
+    const attemptCount = document.querySelector("#attemptCount");
+    const message = document.querySelector("#message");
+    const finishOverlay = document.querySelector("#finishOverlay");
+    const finishScore = document.querySelector("#finishScore");
+    let attempts = 0;
+    let matched = 0;
+    let draggedCard = null;
+    let touchDrag = null;
+
+    function shuffle(items) {
+      return [...items].sort(() => Math.random() - 0.5);
+    }
+
+    function render() {
+      attempts = 0;
+      matched = 0;
+      poemBank.innerHTML = "";
+      authorList.innerHTML = "";
+      finishOverlay.classList.remove("show");
+      totalCount.textContent = poems.length;
+      updateStats();
+
+      shuffle(poems).forEach((poem) => poemBank.appendChild(createPoemCard(poem)));
+      shuffle(poems).forEach((poem) => authorList.appendChild(createAuthorSlot(poem)));
+      message.textContent = "選一張詩句卡，拖到對應作者。";
+    }
+
+    function createPoemCard(poem) {
+      const card = document.createElement("article");
+      card.className = "poem-card";
+      card.draggable = true;
+      card.dataset.id = poem.id;
+      card.innerHTML = `
+        <div class="verse">${poem.verse}</div>
+        <div class="source">${poem.source}</div>
+      `;
+
+      card.addEventListener("dragstart", (event) => {
+        if (card.classList.contains("correct")) {
+          event.preventDefault();
+          return;
+        }
+        draggedCard = card;
+        card.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", poem.id);
+      });
+
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+        draggedCard = null;
+      });
+
+      card.addEventListener("touchstart", beginTouchDrag, { passive: false });
+      return card;
+    }
+
+    function createAuthorSlot(poem) {
+      const slot = document.createElement("div");
+      slot.className = "author-slot";
+      slot.dataset.id = poem.id;
+      slot.innerHTML = `
+        <div class="author">${poem.author}</div>
+        <div class="hint">把代表作品拖到這裡</div>
+      `;
+
+      slot.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        if (!slot.classList.contains("correct")) slot.classList.add("over");
+      });
+
+      slot.addEventListener("dragleave", () => slot.classList.remove("over"));
+
+      slot.addEventListener("drop", (event) => {
+        event.preventDefault();
+        slot.classList.remove("over");
+        const id = event.dataTransfer.getData("text/plain");
+        const card = draggedCard || document.querySelector(`.poem-card[data-id="${id}"]`);
+        if (card) checkMatch(card, slot);
+      });
+
+      return slot;
+    }
+
+    function checkMatch(card, slot) {
+      if (card.classList.contains("correct") || slot.classList.contains("correct")) return;
+      attempts += 1;
+
+      if (card.dataset.id === slot.dataset.id) {
+        matched += 1;
+        card.classList.add("correct");
+        card.draggable = false;
+        slot.classList.add("correct");
+        slot.querySelector(".hint").textContent = "配對成功";
+        slot.appendChild(card);
+        message.textContent = "答對了！這一句和作者正好相配。";
+        updateStats();
+
+        if (matched === poems.length) {
+          window.setTimeout(showFinish, 350);
+        }
+        return;
+      }
+
+      slot.classList.add("wrong");
+      message.textContent = "作者不對，再想想這句詩詞是誰寫的。";
+      window.setTimeout(() => slot.classList.remove("wrong"), 360);
+      updateStats();
+    }
+
+    function updateStats() {
+      matchedCount.textContent = matched;
+      attemptCount.textContent = attempts;
+    }
+
+    function showFinish() {
+      finishScore.textContent = `總共嘗試 ${attempts} 次，成功配對 ${poems.length} 首詩詞。`;
+      finishOverlay.classList.add("show");
+    }
+
+    function getTouchPoint(event) {
+      return event.touches[0] || event.changedTouches[0];
+    }
+
+    function beginTouchDrag(event) {
+      if (event.currentTarget.classList.contains("correct")) return;
+      event.preventDefault();
+      const point = getTouchPoint(event);
+      const ghost = event.currentTarget.cloneNode(true);
+      ghost.classList.add("drag-ghost");
+      document.body.appendChild(ghost);
+      touchDrag = {
+        source: event.currentTarget,
+        ghost
+      };
+      moveGhost(point);
+    }
+
+    function moveGhost(point) {
+      if (!touchDrag || !point) return;
+      touchDrag.ghost.style.left = `${point.clientX}px`;
+      touchDrag.ghost.style.top = `${point.clientY}px`;
+    }
+
+    window.addEventListener("touchmove", (event) => {
+      if (!touchDrag) return;
+      event.preventDefault();
+      const point = getTouchPoint(event);
+      moveGhost(point);
+      document.querySelectorAll(".author-slot").forEach((slot) => slot.classList.remove("over"));
+      const under = document.elementFromPoint(point.clientX, point.clientY);
+      const slot = under && under.closest(".author-slot");
+      if (slot && !slot.classList.contains("correct")) slot.classList.add("over");
+    }, { passive: false });
+
+    window.addEventListener("touchend", (event) => {
+      if (!touchDrag) return;
+      const point = getTouchPoint(event);
+      const under = point && document.elementFromPoint(point.clientX, point.clientY);
+      const slot = under && under.closest(".author-slot");
+      document.querySelectorAll(".author-slot").forEach((item) => item.classList.remove("over"));
+      touchDrag.ghost.remove();
+      if (slot) checkMatch(touchDrag.source, slot);
+      touchDrag = null;
+    });
+
+    window.addEventListener("touchcancel", () => {
+      if (!touchDrag) return;
+      touchDrag.ghost.remove();
+      touchDrag = null;
+      document.querySelectorAll(".author-slot").forEach((slot) => slot.classList.remove("over"));
+    });
+
+    document.querySelector("#restartButton").addEventListener("click", render);
+
+    render();
+  </script>
+</body>
+</html>

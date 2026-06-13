@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>成語填字</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #1f1710;
+      --muted: #735f46;
+      --paper: #f3dfab;
+      --paper-light: #fff5d0;
+      --paper-deep: #ddbd72;
+      --cinnabar: #b42821;
+      --cinnabar-deep: #7f1918;
+      --green: #287247;
+      --wood: #e9c985;
+      --shadow: rgba(58, 33, 16, 0.24);
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255, 248, 216, 0.9), transparent 22rem),
+        radial-gradient(circle at 82% 12%, rgba(212, 86, 48, 0.1), transparent 18rem),
+        repeating-linear-gradient(42deg, rgba(116, 87, 48, 0.045) 0 1px, transparent 1px 16px),
+        linear-gradient(135deg, #ecd79d 0%, #f7e9ba 46%, #dec17b 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(rgba(91, 65, 37, 0.12) 0.8px, transparent 0.8px),
+        radial-gradient(rgba(255, 255, 255, 0.2) 0.8px, transparent 0.8px);
+      background-position: 0 0, 10px 12px;
+      background-size: 24px 24px;
+      mix-blend-mode: multiply;
+      opacity: 0.55;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      position: relative;
+      width: min(1120px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 14px;
+      border: 2px solid rgba(127, 25, 24, 0.45);
+      color: var(--cinnabar-deep);
+      background: rgba(255, 246, 213, 0.82);
+      box-shadow: 0 10px 22px var(--shadow);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .map-link:hover {
+      background: rgba(255, 250, 230, 0.96);
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid rgba(127, 25, 24, 0.28);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--cinnabar-deep);
+      font-size: clamp(2.3rem, 5vw, 4.8rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0;
+      text-shadow: 0 2px 0 rgba(255, 247, 216, 0.85), 0 12px 24px rgba(81, 46, 20, 0.18);
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 250px;
+      padding: 10px;
+      border: 2px solid rgba(127, 25, 24, 0.45);
+      background: rgba(255, 246, 213, 0.72);
+      box-shadow: 0 10px 24px var(--shadow), inset 0 0 0 4px rgba(255, 255, 255, 0.23);
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.2;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--cinnabar-deep);
+      font-size: 1.65rem;
+      line-height: 1.1;
+    }
+
+    main {
+      display: grid;
+      gap: 18px;
+      padding-top: 22px;
+    }
+
+    .stage {
+      display: grid;
+      gap: 22px;
+      padding: clamp(16px, 3vw, 28px);
+      border: 2px solid rgba(127, 25, 24, 0.32);
+      background:
+        linear-gradient(90deg, rgba(180, 40, 33, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(180, 40, 33, 0.08) 1px, transparent 1px),
+        rgba(255, 246, 214, 0.72);
+      background-size: 54px 54px;
+      box-shadow: 0 18px 40px rgba(88, 51, 22, 0.22), inset 0 0 0 6px rgba(255, 255, 255, 0.2);
+    }
+
+    .prompt-row {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .question-count {
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      font-weight: 700;
+    }
+
+    .idiom-line {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: clamp(8px, 1.8vw, 16px);
+      width: 100%;
+      min-height: clamp(104px, 16vw, 150px);
+    }
+
+    .fixed-char,
+    .slot {
+      display: grid;
+      place-items: center;
+      width: clamp(64px, 12vw, 108px);
+      aspect-ratio: 1;
+      font-size: clamp(2.5rem, 7vw, 5.2rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .fixed-char {
+      color: #17110d;
+      text-shadow: 0 2px 0 rgba(255, 250, 230, 0.9);
+    }
+
+    .slot {
+      position: relative;
+      border: 3px solid var(--cinnabar);
+      color: rgba(180, 40, 33, 0.34);
+      background:
+        linear-gradient(45deg, transparent calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(-45deg, transparent calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% - 1px), rgba(180, 40, 33, 0.22) calc(50% + 1px), transparent calc(50% + 1px)),
+        rgba(255, 242, 199, 0.9);
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.42), 0 12px 24px rgba(87, 50, 21, 0.18);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+
+    .slot.over {
+      transform: translateY(-3px);
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.5), 0 14px 26px rgba(180, 40, 33, 0.24);
+    }
+
+    .slot.correct {
+      color: var(--cinnabar);
+      background-color: rgba(255, 231, 182, 0.96);
+      animation: seal 0.28s ease-out;
+    }
+
+    .slot.wrong {
+      animation: wrongFlash 0.2s ease;
+    }
+
+    .meaning-panel {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-left: 6px solid var(--green);
+      background: rgba(255, 252, 232, 0.82);
+      box-shadow: 0 8px 20px rgba(77, 45, 20, 0.14);
+    }
+
+    .meaning-panel.show {
+      display: flex;
+    }
+
+    .feedback {
+      margin: 0;
+      color: var(--green);
+      font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .meaning {
+      margin: 0;
+      color: #302519;
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      line-height: 1.65;
+    }
+
+    .bank-wrap {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bank-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .card-bank {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(8px, 1.4vw, 13px);
+      min-height: 232px;
+    }
+
+    .tile {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      aspect-ratio: 1.45;
+      border: 2px solid rgba(101, 65, 28, 0.55);
+      color: #15100b;
+      background:
+        linear-gradient(115deg, rgba(113, 70, 28, 0.08), transparent 28%, rgba(255, 255, 255, 0.22) 48%, transparent 70%),
+        repeating-linear-gradient(8deg, rgba(99, 61, 25, 0.055) 0 2px, transparent 2px 9px),
+        linear-gradient(180deg, #f7dda0, var(--wood));
+      box-shadow: 0 9px 18px rgba(84, 49, 22, 0.2), inset 0 0 0 3px rgba(255, 255, 255, 0.22);
+      font-size: clamp(1.55rem, 4vw, 3rem);
+      font-weight: 900;
+      line-height: 1;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+    }
+
+    .tile:hover {
+      transform: translateY(-2px);
+      border-color: var(--cinnabar);
+      box-shadow: 0 12px 22px rgba(84, 49, 22, 0.24), inset 0 0 0 3px rgba(255, 255, 255, 0.28);
+    }
+
+    .tile.dragging {
+      position: fixed;
+      z-index: 20;
+      width: var(--drag-width);
+      height: var(--drag-height);
+      pointer-events: none;
+      cursor: grabbing;
+      opacity: 0.96;
+      transform: translate(-50%, -50%) scale(1.04);
+    }
+
+    .tile.used {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .tile.placed {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      color: var(--cinnabar);
+      background: transparent;
+      box-shadow: none;
+      font-size: inherit;
+      cursor: default;
+      animation: seal 0.28s ease-out;
+    }
+
+    .tile.returning {
+      animation: wrongBounce 0.22s ease;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .primary-btn {
+      min-width: 148px;
+      min-height: 48px;
+      padding: 10px 18px;
+      border: 2px solid var(--cinnabar-deep);
+      color: #fff8e4;
+      background: linear-gradient(180deg, #c83a31, var(--cinnabar-deep));
+      box-shadow: 0 10px 18px rgba(79, 34, 20, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      font-size: 1.08rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .primary-btn[hidden] {
+      display: none;
+    }
+
+    .finish {
+      display: none;
+      gap: 18px;
+      justify-items: center;
+      padding: clamp(28px, 6vw, 54px);
+      text-align: center;
+    }
+
+    .finish.show {
+      display: grid;
+    }
+
+    .finish h2 {
+      margin: 0;
+      color: var(--cinnabar-deep);
+      font-size: clamp(2.4rem, 7vw, 5rem);
+      line-height: 1;
+    }
+
+    .finish p {
+      margin: 0;
+      color: #322416;
+      font-size: clamp(1.15rem, 2.4vw, 1.6rem);
+      line-height: 1.7;
+    }
+
+    @keyframes seal {
+      0% {
+        transform: scale(1.35) rotate(-4deg);
+        opacity: 0.45;
+      }
+      100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes wrongFlash {
+      0%,
+      100% {
+        box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.42), 0 12px 24px rgba(87, 50, 21, 0.18);
+      }
+      50% {
+        box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.42), 0 0 0 8px rgba(210, 26, 18, 0.34), 0 0 24px rgba(210, 26, 18, 0.45);
+      }
+    }
+
+    @keyframes wrongBounce {
+      0% {
+        transform: translateX(0);
+        border-color: var(--cinnabar);
+      }
+      35% {
+        transform: translateX(-7px);
+        box-shadow: 0 0 0 7px rgba(210, 26, 18, 0.22), 0 12px 22px rgba(84, 49, 22, 0.24);
+      }
+      70% {
+        transform: translateX(7px);
+        box-shadow: 0 0 0 7px rgba(210, 26, 18, 0.22), 0 12px 22px rgba(84, 49, 22, 0.24);
+      }
+      100% {
+        transform: translateX(0);
+        border-color: rgba(101, 65, 28, 0.55);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        width: min(100% - 18px, 1120px);
+        padding-top: 14px;
+      }
+
+      header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .stats {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .stage {
+        padding: 14px;
+      }
+
+      .card-bank {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        min-height: 0;
+      }
+
+      .meaning-panel {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .feedback {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>成語填字</h1>
+      <a class="map-link" href="../index.html">← 回到大地圖</a>
+      <div class="stats" aria-label="遊戲進度">
+        <div class="stat">
+          <span>題目</span>
+          <strong id="progressText">1 / 5</strong>
+        </div>
+        <div class="stat">
+          <span>答對</span>
+          <strong id="scoreText">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="stage" id="gameStage" aria-live="polite">
+        <div class="prompt-row">
+          <div class="question-count" id="questionCount">第 1 題</div>
+          <div class="idiom-line" id="idiomLine" aria-label="成語填空"></div>
+        </div>
+
+        <div class="meaning-panel" id="meaningPanel">
+          <p class="feedback">✓ 答對！</p>
+          <p class="meaning" id="meaningText"></p>
+        </div>
+
+        <div class="bank-wrap">
+          <div class="bank-title">
+            <span>拖曳字卡到上方紅色方格</span>
+            <span id="remainingText">尚缺 2 字</span>
+          </div>
+          <div class="card-bank" id="cardBank"></div>
+        </div>
+
+        <div class="actions">
+          <button class="primary-btn" id="nextButton" hidden>下一題</button>
+        </div>
+      </section>
+
+      <section class="stage finish" id="finishStage">
+        <h2>完成挑戰</h2>
+        <p id="finalText"></p>
+        <button class="primary-btn" id="restartButton">重新挑戰</button>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      { 成語: "一鳴驚人", 缺字: [1, 2], 答案: ["鳴", "驚"], 意思: "比喻平時默默無聞，突然有驚人表現。" },
+      { 成語: "風花雪月", 缺字: [1, 3], 答案: ["花", "月"], 意思: "原指四時景色，後比喻浮華空洞的詩文。" },
+      { 成語: "三番五次", 缺字: [1, 3], 答案: ["番", "次"], 意思: "形容次數很多。" },
+      { 成語: "一字千金", 缺字: [1, 3], 答案: ["字", "金"], 意思: "形容文字價值極高。" },
+      { 成語: "畫龍點睛", 缺字: [1, 3], 答案: ["龍", "睛"], 意思: "比喻在關鍵處點明要旨，使內容更生動有力。" },
+      { 成語: "井底之蛙", 缺字: [0, 3], 答案: ["井", "蛙"], 意思: "比喻見識狹小的人。" },
+      { 成語: "杯弓蛇影", 缺字: [1, 2], 答案: ["弓", "蛇"], 意思: "比喻疑神疑鬼，自相驚擾。" },
+      { 成語: "守株待兔", 缺字: [1, 3], 答案: ["株", "兔"], 意思: "比喻拘泥舊法，不知變通，或妄想不勞而獲。" },
+      { 成語: "刻舟求劍", 缺字: [0, 3], 答案: ["刻", "劍"], 意思: "比喻拘泥成例，不懂得隨情勢改變而調整。" },
+      { 成語: "亡羊補牢", 缺字: [1, 3], 答案: ["羊", "牢"], 意思: "比喻出了問題後及時補救，還不算太晚。" },
+      { 成語: "狐假虎威", 缺字: [0, 2], 答案: ["狐", "虎"], 意思: "比喻倚仗別人的權勢來欺壓人。" },
+      { 成語: "胸有成竹", 缺字: [0, 3], 答案: ["胸", "竹"], 意思: "比喻做事之前已有完整的計畫和把握。" },
+      { 成語: "青出於藍", 缺字: [0, 3], 答案: ["青", "藍"], 意思: "比喻學生勝過老師，或後人超越前人。" },
+      { 成語: "滄海一粟", 缺字: [1, 3], 答案: ["海", "粟"], 意思: "比喻非常渺小，微不足道。" },
+      { 成語: "雪中送炭", 缺字: [0, 3], 答案: ["雪", "炭"], 意思: "比喻在別人急需時給予幫助。" }
+    ];
+
+    const DISTRACTORS = "天地山水日月星雲風雨雷電春夏秋冬花草林木鳥魚蟲石金玉火土心手口耳目光影聲色書筆詩文忠孝仁義禮智信勇明暗高低遠近前後左右東西南北";
+    const ROUND_SIZE = 5;
+    const CARD_COUNT = 15;
+
+    const idiomLine = document.querySelector("#idiomLine");
+    const cardBank = document.querySelector("#cardBank");
+    const meaningPanel = document.querySelector("#meaningPanel");
+    const meaningText = document.querySelector("#meaningText");
+    const nextButton = document.querySelector("#nextButton");
+    const restartButton = document.querySelector("#restartButton");
+    const progressText = document.querySelector("#progressText");
+    const scoreText = document.querySelector("#scoreText");
+    const questionCount = document.querySelector("#questionCount");
+    const remainingText = document.querySelector("#remainingText");
+    const gameStage = document.querySelector("#gameStage");
+    const finishStage = document.querySelector("#finishStage");
+    const finalText = document.querySelector("#finalText");
+
+    let roundQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let placedCount = 0;
+    let activeDrag = null;
+    let audioContext = null;
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function sampleDistractors(answers) {
+      const pool = shuffle([...new Set(DISTRACTORS.split("").filter((char) => !answers.includes(char)))]);
+      return pool.slice(0, CARD_COUNT - answers.length);
+    }
+
+    function startGame() {
+      roundQuestions = shuffle(QUESTIONS).slice(0, ROUND_SIZE);
+      currentIndex = 0;
+      score = 0;
+      gameStage.style.display = "grid";
+      finishStage.classList.remove("show");
+      scoreText.textContent = score;
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const question = roundQuestions[currentIndex];
+      placedCount = 0;
+      activeDrag = null;
+      idiomLine.innerHTML = "";
+      cardBank.innerHTML = "";
+      meaningPanel.classList.remove("show");
+      nextButton.hidden = true;
+
+      progressText.textContent = `${currentIndex + 1} / ${ROUND_SIZE}`;
+      questionCount.textContent = `第 ${currentIndex + 1} 題`;
+      remainingText.textContent = "尚缺 2 字";
+
+      [...question.成語].forEach((char, index) => {
+        const answerIndex = question.缺字.indexOf(index);
+        if (answerIndex === -1) {
+          const fixed = document.createElement("div");
+          fixed.className = "fixed-char";
+          fixed.textContent = char;
+          idiomLine.append(fixed);
+          return;
+        }
+
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.textContent = "□";
+        slot.dataset.answer = question.答案[answerIndex];
+        slot.dataset.filled = "false";
+        idiomLine.append(slot);
+      });
+
+      const cards = shuffle([...question.答案, ...sampleDistractors(question.答案)]);
+      cards.forEach((char, index) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.textContent = char;
+        tile.dataset.char = char;
+        tile.dataset.cardId = `card-${currentIndex}-${index}`;
+        tile.setAttribute("role", "button");
+        tile.setAttribute("aria-label", `字卡 ${char}`);
+        cardBank.append(tile);
+      });
+    }
+
+    function playBell() {
+      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioContext.currentTime;
+      [784, 1046.5].forEach((frequency, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, now + index * 0.04);
+        gain.gain.setValueAtTime(0, now + index * 0.04);
+        gain.gain.linearRampToValueAtTime(0.16, now + index * 0.04 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.04 + 0.28);
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(now + index * 0.04);
+        oscillator.stop(now + index * 0.04 + 0.3);
+      });
+    }
+
+    function beginDrag(event) {
+      const tile = event.target.closest(".tile:not(.used):not(.placed)");
+      if (!tile || meaningPanel.classList.contains("show")) return;
+
+      event.preventDefault();
+      const rect = tile.getBoundingClientRect();
+      activeDrag = {
+        tile,
+        originParent: tile.parentElement,
+        originNext: tile.nextSibling,
+        width: rect.width,
+        height: rect.height
+      };
+
+      tile.style.setProperty("--drag-width", `${rect.width}px`);
+      tile.style.setProperty("--drag-height", `${rect.height}px`);
+      tile.classList.add("dragging");
+      document.body.append(tile);
+      moveDrag(event);
+    }
+
+    function moveDrag(event) {
+      if (!activeDrag) return;
+      const point = getPoint(event);
+      activeDrag.tile.style.left = `${point.x}px`;
+      activeDrag.tile.style.top = `${point.y}px`;
+
+      document.querySelectorAll(".slot.over").forEach((slot) => slot.classList.remove("over"));
+      const slot = getSlotAt(point.x, point.y);
+      if (slot) slot.classList.add("over");
+    }
+
+    function endDrag(event) {
+      if (!activeDrag) return;
+      const point = getPoint(event);
+      const slot = getSlotAt(point.x, point.y);
+      document.querySelectorAll(".slot.over").forEach((item) => item.classList.remove("over"));
+
+      if (slot && slot.dataset.answer === activeDrag.tile.dataset.char) {
+        placeTile(slot);
+      } else {
+        rejectTile(slot);
+      }
+    }
+
+    function getPoint(event) {
+      const touch = event.changedTouches?.[0] || event.touches?.[0];
+      return {
+        x: touch ? touch.clientX : event.clientX,
+        y: touch ? touch.clientY : event.clientY
+      };
+    }
+
+    function getSlotAt(x, y) {
+      const hiddenTile = activeDrag?.tile;
+      if (hiddenTile) hiddenTile.style.visibility = "hidden";
+      const element = document.elementFromPoint(x, y);
+      if (hiddenTile) hiddenTile.style.visibility = "";
+      const slot = element?.closest?.(".slot");
+      if (!slot || slot.dataset.filled === "true") return null;
+      return slot;
+    }
+
+    function placeTile(slot) {
+      const { tile } = activeDrag;
+      tile.classList.remove("dragging");
+      tile.classList.add("placed");
+      tile.removeAttribute("style");
+      slot.textContent = "";
+      slot.dataset.filled = "true";
+      slot.classList.add("correct");
+      slot.append(tile);
+      playBell();
+      placedCount += 1;
+      remainingText.textContent = `尚缺 ${2 - placedCount} 字`;
+      activeDrag = null;
+
+      if (placedCount === 2) {
+        finishQuestion();
+      }
+    }
+
+    function rejectTile(slot) {
+      const { tile, originParent, originNext } = activeDrag;
+      tile.classList.remove("dragging");
+      tile.removeAttribute("style");
+      if (originNext && originNext.parentElement === originParent) {
+        originParent.insertBefore(tile, originNext);
+      } else {
+        originParent.append(tile);
+      }
+      tile.classList.add("returning");
+      window.setTimeout(() => tile.classList.remove("returning"), 230);
+
+      if (slot) {
+        slot.classList.add("wrong");
+        window.setTimeout(() => slot.classList.remove("wrong"), 210);
+      }
+      activeDrag = null;
+    }
+
+    function finishQuestion() {
+      const question = roundQuestions[currentIndex];
+      score += 1;
+      scoreText.textContent = score;
+      meaningText.textContent = question.意思;
+      meaningPanel.classList.add("show");
+      nextButton.hidden = false;
+      remainingText.textContent = "已完成";
+    }
+
+    function goNext() {
+      currentIndex += 1;
+      if (currentIndex >= ROUND_SIZE) {
+        showFinish();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function showFinish() {
+      localStorage.setItem("cert_idiom", "true");
+      gameStage.style.display = "none";
+      finishStage.classList.add("show");
+      progressText.textContent = `${ROUND_SIZE} / ${ROUND_SIZE}`;
+      finalText.textContent = `總成績：${score} / ${ROUND_SIZE}。這回合完成 ${ROUND_SIZE} 題成語填字。`;
+    }
+
+    cardBank.addEventListener("mousedown", beginDrag);
+    cardBank.addEventListener("touchstart", beginDrag, { passive: false });
+    window.addEventListener("mousemove", moveDrag);
+    window.addEventListener("touchmove", moveDrag, { passive: false });
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("touchend", endDrag);
+    window.addEventListener("touchcancel", endDrag);
+    nextButton.addEventListener("click", goNext);
+    restartButton.addEventListener("click", startGame);
+
+    startGame();
+  </script>
+</body>
+</html>

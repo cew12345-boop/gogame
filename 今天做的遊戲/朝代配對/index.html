@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>朝代配對</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #170b08;
+      --night: #21120f;
+      --panel: #2b1813;
+      --gold: #d6aa4f;
+      --gold-bright: #ffd36c;
+      --paper: #f3e3bc;
+      --paper-deep: #e6c989;
+      --red: #a73529;
+      --red-bright: #df5a45;
+      --green: #2f7d4f;
+      --green-bright: #7ed49e;
+      --white: #fff7df;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--white);
+      font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(214, 170, 79, 0.18), transparent 28rem),
+        radial-gradient(circle at 80% 20%, rgba(167, 53, 41, 0.2), transparent 26rem),
+        linear-gradient(135deg, #120806 0%, #27120f 52%, #0d0706 100%);
+      overflow-x: hidden;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 34px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 0 22px;
+      border-bottom: 1px solid rgba(214, 170, 79, 0.45);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--gold-bright);
+      font-size: clamp(2rem, 4vw, 4rem);
+      font-weight: 900;
+      letter-spacing: 0;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      min-width: 260px;
+      padding: 12px 16px;
+      border: 1px solid var(--gold);
+      background: rgba(23, 11, 8, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(255, 211, 108, 0.1), 0 14px 28px var(--shadow);
+    }
+
+    .stat-item {
+      display: grid;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .stats span {
+      color: var(--paper-deep);
+      font-size: 0.95rem;
+    }
+
+    .stats strong {
+      color: var(--gold-bright);
+      font-size: 1.7rem;
+      line-height: 1;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 22px;
+      padding-top: 24px;
+      align-items: start;
+    }
+
+    .dynasty-board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .dynasty-card {
+      min-height: 224px;
+      border: 2px solid var(--gold);
+      background:
+        linear-gradient(180deg, rgba(255, 247, 223, 0.98), rgba(230, 201, 137, 0.95)),
+        var(--paper);
+      color: var(--ink);
+      box-shadow: 0 16px 32px var(--shadow), inset 0 0 0 4px rgba(82, 39, 23, 0.08);
+      overflow: hidden;
+    }
+
+    .dynasty-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70px;
+      border-bottom: 1px solid rgba(82, 39, 23, 0.25);
+      color: #6f1f18;
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      font-weight: 900;
+      line-height: 1;
+      background: rgba(255, 248, 223, 0.48);
+    }
+
+    .drop-zone {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 8px;
+      min-height: 150px;
+      padding: 12px;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .drop-zone.drag-over {
+      background: rgba(255, 211, 108, 0.28);
+      box-shadow: inset 0 0 0 2px rgba(167, 53, 41, 0.35);
+    }
+
+    .events-panel {
+      position: sticky;
+      top: 18px;
+      border: 2px solid var(--gold);
+      background: rgba(23, 11, 8, 0.78);
+      box-shadow: 0 16px 32px var(--shadow), inset 0 0 0 1px rgba(255, 211, 108, 0.12);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(214, 170, 79, 0.45);
+      background: rgba(167, 53, 41, 0.22);
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      color: var(--gold-bright);
+      font-size: 1.25rem;
+    }
+
+    .remaining {
+      color: var(--paper-deep);
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .event-bank {
+      display: grid;
+      gap: 10px;
+      max-height: calc(100vh - 190px);
+      min-height: 280px;
+      overflow-y: auto;
+      padding: 14px;
+      scrollbar-color: var(--gold) rgba(255, 255, 255, 0.08);
+    }
+
+    .event-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 52px;
+      padding: 10px 12px;
+      border: 2px solid var(--red);
+      color: var(--white);
+      background: linear-gradient(180deg, #321812, #1d100d);
+      box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, opacity 0.16s ease;
+      touch-action: none;
+    }
+
+    .event-card:hover {
+      border-color: var(--red-bright);
+      transform: translateY(-1px);
+    }
+
+    .event-card.dragging {
+      opacity: 0.55;
+      cursor: grabbing;
+    }
+
+    .event-card .icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      font-size: 1.3rem;
+    }
+
+    .event-card .text {
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .event-card.correct {
+      min-height: 38px;
+      width: auto;
+      max-width: 100%;
+      padding: 7px 9px;
+      border-color: var(--green-bright);
+      color: #effff4;
+      background: linear-gradient(180deg, #34764f, #1f5235);
+      box-shadow: 0 7px 12px rgba(0, 0, 0, 0.18);
+      cursor: default;
+    }
+
+    .event-card.correct .icon {
+      width: 22px;
+      height: 22px;
+      flex-basis: 22px;
+      font-size: 1rem;
+    }
+
+    .event-card.correct .text {
+      font-size: 0.88rem;
+    }
+
+    .event-card.wrong {
+      animation: wrongFlash 0.3s ease;
+    }
+
+    .event-card.returning {
+      animation: returnPop 0.25s ease;
+    }
+
+    .done-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(10, 5, 4, 0.75);
+      z-index: 10;
+    }
+
+    .done-overlay.show {
+      display: grid;
+      animation: goldenFlash 0.9s ease both;
+    }
+
+    .done-box {
+      width: min(520px, 100%);
+      padding: 32px 24px;
+      border: 2px solid var(--gold-bright);
+      color: var(--ink);
+      text-align: center;
+      background: linear-gradient(180deg, #fff0bc, #dfbb62);
+      box-shadow: 0 0 42px rgba(255, 211, 108, 0.72), 0 22px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    .done-box h2 {
+      margin: 0 0 10px;
+      color: #7d2118;
+      font-size: clamp(2rem, 7vw, 3.5rem);
+    }
+
+    .done-box p {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .certificate {
+      display: none;
+      margin: 18px auto 22px;
+      padding: 18px 14px;
+      border: 3px double #8c2c20;
+      color: #6f1f18;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent 22%, transparent 78%, rgba(255, 255, 255, 0.35)),
+        #fff6d5;
+      box-shadow: inset 0 0 0 4px rgba(214, 170, 79, 0.35);
+    }
+
+    .certificate.show {
+      display: block;
+    }
+
+    .certificate strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #8c2c20;
+      font-size: 1.55rem;
+    }
+
+    .certificate span {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 10px 22px;
+      border: 2px solid #7d2118;
+      color: #fff9e7;
+      font: 700 1rem "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+      background: #8f2b22;
+      cursor: pointer;
+      transition: transform 0.16s ease, background 0.16s ease;
+    }
+
+    button:hover {
+      background: #6f1f18;
+      transform: translateY(-1px);
+    }
+
+    @keyframes wrongFlash {
+      0%, 100% {
+        background: linear-gradient(180deg, #321812, #1d100d);
+        transform: translateX(0);
+      }
+      30% {
+        background: #8e1414;
+        border-color: #ff6a58;
+        box-shadow: 0 0 18px rgba(255, 77, 77, 0.75);
+        transform: translateX(-7px);
+      }
+      65% {
+        transform: translateX(7px);
+      }
+    }
+
+    @keyframes returnPop {
+      0% {
+        transform: scale(0.96);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes goldenFlash {
+      0% {
+        background: rgba(255, 211, 108, 0.95);
+      }
+      100% {
+        background: rgba(10, 5, 4, 0.75);
+      }
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        width: min(100% - 20px, 680px);
+        padding-top: 14px;
+      }
+
+      header {
+        align-items: stretch;
+        flex-direction: column;
+        padding-bottom: 16px;
+      }
+
+      .stats {
+        min-width: 0;
+        justify-content: stretch;
+      }
+
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .dynasty-board {
+        grid-template-columns: 1fr;
+      }
+
+      .dynasty-card {
+        min-height: 188px;
+      }
+
+      .drop-zone {
+        min-height: 112px;
+      }
+
+      .events-panel {
+        position: static;
+      }
+
+      .event-bank {
+        display: flex;
+        gap: 10px;
+        min-height: 92px;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 16px;
+      }
+
+      .event-bank .event-card {
+        width: 210px;
+        min-width: 210px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>朝代配對</h1>
+      <div class="stats" aria-live="polite">
+        <div class="stat-item">
+          <span>嘗試次數</span>
+          <strong id="attemptCount">0</strong>
+        </div>
+        <div class="stat-item">
+          <span>目前分數</span>
+          <strong id="scoreCount">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="dynasty-board" id="dynastyBoard" aria-label="朝代掉落區"></section>
+
+      <aside class="events-panel" aria-label="事件卡區">
+        <div class="panel-head">
+          <h2>事件卡</h2>
+          <span class="remaining">剩 <b id="remainingCount">0</b> 張</span>
+        </div>
+        <div class="event-bank" id="eventBank"></div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="done-overlay" id="doneOverlay" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+    <div class="done-box">
+      <h2 id="doneTitle">過關</h2>
+      <p>總嘗試次數：<span id="finalAttempts">0</span></p>
+      <p>最後分數：<span id="finalScore">0</span></p>
+      <div class="certificate" id="certificate">
+        <strong>朝代通達證書</strong>
+        <span>分數超過 100 分，表現優異</span>
+      </div>
+      <button type="button" id="restartButton">再玩一次</button>
+    </div>
+  </div>
+
+  <script>
+    const dynasties = [
+      { id: 1, name: "秦" },
+      { id: 2, name: "漢" },
+      { id: 3, name: "唐" },
+      { id: 4, name: "宋" },
+      { id: 5, name: "明" },
+      { id: 6, name: "清" }
+    ];
+
+    const events = [
+      { id: "e1", dynasty_id: 1, text: "統一六國", icon: "⚔️" },
+      { id: "e2", dynasty_id: 1, text: "修築萬里長城", icon: "🧱" },
+      { id: "e3", dynasty_id: 1, text: "焚書坑儒", icon: "🔥" },
+      { id: "e4", dynasty_id: 2, text: "張騫通西域", icon: "🐪" },
+      { id: "e5", dynasty_id: 2, text: "文景之治", icon: "📜" },
+      { id: "e6", dynasty_id: 2, text: "罷黜百家獨尊儒術", icon: "📖" },
+      { id: "e7", dynasty_id: 3, text: "貞觀之治", icon: "👑" },
+      { id: "e8", dynasty_id: 3, text: "安史之亂", icon: "💥" },
+      { id: "e9", dynasty_id: 3, text: "玄奘西行取經", icon: "🧘" },
+      { id: "e10", dynasty_id: 4, text: "王安石變法", icon: "📜" },
+      { id: "e11", dynasty_id: 4, text: "岳飛抗金", icon: "🗡️" },
+      { id: "e12", dynasty_id: 5, text: "鄭和下西洋", icon: "⛵" },
+      { id: "e13", dynasty_id: 5, text: "永樂大典編成", icon: "📚" },
+      { id: "e14", dynasty_id: 6, text: "鴉片戰爭", icon: "💣" },
+      { id: "e15", dynasty_id: 6, text: "康熙盛世", icon: "🌅" },
+      { id: "e16", dynasty_id: 6, text: "辛亥革命終結", icon: "🏛️" }
+    ];
+
+    const board = document.querySelector("#dynastyBoard");
+    const eventBank = document.querySelector("#eventBank");
+    const attemptCount = document.querySelector("#attemptCount");
+    const scoreCount = document.querySelector("#scoreCount");
+    const remainingCount = document.querySelector("#remainingCount");
+    const doneOverlay = document.querySelector("#doneOverlay");
+    const finalAttempts = document.querySelector("#finalAttempts");
+    const finalScore = document.querySelector("#finalScore");
+    const certificate = document.querySelector("#certificate");
+    const restartButton = document.querySelector("#restartButton");
+
+    let attempts = 0;
+    let score = 0;
+    let matched = 0;
+    let draggedCard = null;
+    let originalIndex = 0;
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function createEventCard(eventItem) {
+      const card = document.createElement("div");
+      card.className = "event-card";
+      card.draggable = true;
+      card.dataset.id = eventItem.id;
+      card.dataset.dynastyId = eventItem.dynasty_id;
+      card.innerHTML = `
+        <span class="icon" aria-hidden="true">${eventItem.icon}</span>
+        <span class="text">${eventItem.text}</span>
+      `;
+
+      card.addEventListener("dragstart", (event) => {
+        if (card.classList.contains("correct")) {
+          event.preventDefault();
+          return;
+        }
+        draggedCard = card;
+        originalIndex = [...eventBank.children].indexOf(card);
+        card.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", eventItem.id);
+      });
+
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+      });
+
+      return card;
+    }
+
+    function returnCard(card) {
+      const reference = eventBank.children[originalIndex] || null;
+      eventBank.insertBefore(card, reference);
+      card.classList.add("wrong");
+
+      window.setTimeout(() => {
+        card.classList.remove("wrong");
+        card.classList.add("returning");
+      }, 300);
+
+      window.setTimeout(() => {
+        card.classList.remove("returning");
+      }, 560);
+    }
+
+    function updateCounts() {
+      attemptCount.textContent = attempts;
+      scoreCount.textContent = score;
+      remainingCount.textContent = events.length - matched;
+    }
+
+    function finishGame() {
+      finalAttempts.textContent = attempts;
+      finalScore.textContent = score;
+      certificate.classList.toggle("show", score > 100);
+      doneOverlay.classList.add("show");
+    }
+
+    function handleDrop(zone) {
+      const targetDynastyId = Number(zone.dataset.dynastyId);
+      if (!draggedCard) return;
+
+      attempts += 1;
+
+      if (Number(draggedCard.dataset.dynastyId) === targetDynastyId) {
+        score += 10;
+        draggedCard.draggable = false;
+        draggedCard.classList.add("correct");
+        zone.appendChild(draggedCard);
+        matched += 1;
+        draggedCard = null;
+        updateCounts();
+
+        if (matched === events.length) {
+          window.setTimeout(finishGame, 220);
+        }
+        return;
+      }
+
+      score -= 5;
+      returnCard(draggedCard);
+      draggedCard = null;
+      updateCounts();
+    }
+
+    function renderDynasties() {
+      board.innerHTML = "";
+      dynasties.forEach((dynasty) => {
+        const card = document.createElement("article");
+        card.className = "dynasty-card";
+        card.innerHTML = `
+          <div class="dynasty-title">${dynasty.name}</div>
+          <div class="drop-zone" data-dynasty-id="${dynasty.id}"></div>
+        `;
+
+        const zone = card.querySelector(".drop-zone");
+        zone.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          zone.classList.add("drag-over");
+        });
+        zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+        zone.addEventListener("drop", (event) => {
+          event.preventDefault();
+          zone.classList.remove("drag-over");
+          handleDrop(zone);
+        });
+
+        board.appendChild(card);
+      });
+    }
+
+    function renderEvents() {
+      eventBank.innerHTML = "";
+      shuffle(events).forEach((eventItem) => {
+        eventBank.appendChild(createEventCard(eventItem));
+      });
+    }
+
+    function startGame() {
+      attempts = 0;
+      score = 0;
+      matched = 0;
+      draggedCard = null;
+      doneOverlay.classList.remove("show");
+      certificate.classList.remove("show");
+      renderDynasties();
+      renderEvents();
+      updateCounts();
+    }
+
+    restartButton.addEventListener("click", startGame);
+    startGame();
+  </script>
+</body>
+</html>
