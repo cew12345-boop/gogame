@@ -127,6 +127,173 @@
       animation: coinPop 0.34s ease;
     }
 
+    .ending-cutscene {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      overflow: hidden;
+      color: #fff8df;
+      background: #040507;
+      cursor: pointer;
+    }
+
+    .ending-cutscene.show {
+      display: block;
+    }
+
+    .ending-cutscene.fade-out {
+      animation: cutsceneFadeOut 0.7s ease forwards;
+    }
+
+    .ending-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transform: scale(1.035);
+      transition: opacity 0.75s ease, transform 5.6s ease;
+    }
+
+    .ending-cutscene.show .ending-image {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .ending-vignette {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.66), rgba(0, 0, 0, 0.18) 45%, rgba(0, 0, 0, 0.58)),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 38%, rgba(0, 0, 0, 0.74));
+    }
+
+    .ending-content {
+      position: relative;
+      z-index: 1;
+      min-height: 100svh;
+      display: grid;
+      align-content: end;
+      gap: 16px;
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0;
+      text-shadow: 0 3px 16px rgba(0, 0, 0, 0.72);
+    }
+
+    .ending-kicker {
+      color: rgba(255, 232, 155, 0.92);
+      font-size: 0.95rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .ending-title {
+      margin: 0;
+      color: #ffeaa3;
+      font-size: clamp(2.3rem, 7vw, 5rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .ending-scene {
+      display: grid;
+      gap: 14px;
+      max-width: 660px;
+      padding: 22px 24px;
+      border: 1px solid rgba(255, 234, 163, 0.28);
+      border-radius: 8px;
+      background: rgba(7, 9, 13, 0.58);
+      box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(5px);
+    }
+
+    .ending-scene h3 {
+      margin: 0;
+      color: #ffeaa3;
+      font-size: clamp(1.45rem, 4vw, 2.4rem);
+      line-height: 1.1;
+    }
+
+    .ending-narration,
+    .ending-line {
+      margin: 0;
+      white-space: pre-line;
+      line-height: 1.75;
+    }
+
+    .ending-narration {
+      color: rgba(255, 248, 223, 0.9);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      font-weight: 700;
+    }
+
+    .ending-line {
+      color: #fff0a8;
+      font-size: clamp(1.08rem, 2.4vw, 1.38rem);
+      font-weight: 900;
+    }
+
+    .ending-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      max-width: 660px;
+      color: rgba(255, 248, 223, 0.72);
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .ending-dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .ending-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255, 248, 223, 0.36);
+    }
+
+    .ending-dot.active {
+      background: #ffeaa3;
+    }
+
+    .ending-complete {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: none;
+      place-items: center;
+      padding: 28px;
+      text-align: center;
+      background: rgba(3, 5, 7, 0.82);
+    }
+
+    .ending-complete.show {
+      display: grid;
+      animation: completeFadeIn 1.1s ease forwards;
+    }
+
+    .ending-complete h2 {
+      margin: 0;
+      color: #ffeaa3;
+      font-size: clamp(2.6rem, 9vw, 6.4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .ending-complete p {
+      margin: 18px 0 0;
+      color: rgba(255, 248, 223, 0.78);
+      font-size: clamp(1.1rem, 3vw, 1.65rem);
+      font-weight: 800;
+    }
+
     .screen {
       display: none;
     }
@@ -681,6 +848,21 @@
       }
     }
 
+    @keyframes completeFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes cutsceneFadeOut {
+      to {
+        opacity: 0;
+      }
+    }
+
     @media (max-width: 780px) {
       header,
       .stage-label,
@@ -718,6 +900,19 @@
       .shop-grid,
       .result-stats {
         grid-template-columns: 1fr;
+      }
+
+      .ending-content {
+        padding: 22px 0;
+      }
+
+      .ending-scene {
+        padding: 18px;
+      }
+
+      .ending-footer {
+        align-items: start;
+        flex-direction: column;
       }
     }
   </style>
@@ -825,6 +1020,30 @@
     </section>
   </div>
 
+  <section class="ending-cutscene" id="endingCutscene" aria-live="polite">
+    <img class="ending-image" id="endingImage" src="../page1.png" alt="">
+    <div class="ending-vignette"></div>
+    <div class="ending-content" id="endingContent">
+      <div class="ending-kicker">時空傳承者</div>
+      <h2 class="ending-title" id="endingTitle">星風歸途</h2>
+      <div class="ending-scene">
+        <h3 id="endingChapter">第一張｜風止之地</h3>
+        <p class="ending-narration" id="endingNarration"></p>
+        <p class="ending-line" id="endingLine"></p>
+      </div>
+      <div class="ending-footer">
+        <span>點擊前往下一幕</span>
+        <div class="ending-dots" id="endingDots" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="ending-complete" id="endingComplete">
+      <div>
+        <h2>冒險完成</h2>
+        <p>感謝你的旅程。</p>
+      </div>
+    </div>
+  </section>
+
   <div class="modal-backdrop" id="bagModal" role="dialog" aria-modal="true" aria-labelledby="bagTitle">
     <div class="modal">
       <h2 id="bagTitle">🎒 背包</h2>
@@ -861,6 +1080,39 @@
       { key: "charms", icon: "🛡", name: "救命符", effect: "HP 歸零時自動復活，剩 1 滴 HP。", price: 80 }
     ];
 
+    const endingSlides = [
+      {
+        image: "../page1.png",
+        chapter: "第一張｜風止之地",
+        narration: "曾經震耳欲聾的戰吼，\n如今只剩風聲。\n世界終於記起了安靜的模樣。",
+        line: "「原來終點，\n也會這麼平靜。」"
+      },
+      {
+        image: "../page2.png",
+        chapter: "第二張｜燈火再明",
+        narration: "有些故事被寫進史冊。\n有些故事，\n只留在人們安穩的日常裡。",
+        line: ""
+      },
+      {
+        image: "../page3.png",
+        chapter: "第三張｜群山回聲",
+        narration: "山依舊矗立。\n河依舊流淌。\n世界從未因誰而停止轉動。",
+        line: "「真好啊……」"
+      },
+      {
+        image: "../page4.png",
+        chapter: "第四張｜旅人未停",
+        narration: "旅程從來不是為了抵達。\n而是在一次次離開之後，\n仍願意繼續前行。",
+        line: "「下一個故事，\n會在哪裡等我呢？」"
+      },
+      {
+        image: "../page5.png",
+        chapter: "第五張｜新的地平線",
+        narration: "每個傳說都會迎來結束。\n而每個結束，\n都只是另一段冒險的序章。",
+        line: "「那麼，\n我們再出發吧。」"
+      }
+    ];
+
     const state = {
       questions: [],
       currentQuestion: null,
@@ -878,6 +1130,9 @@
       canAct: true,
       restartedAtOneHp: false
     };
+
+    let endingIndex = 0;
+    let endingLocked = false;
 
     const els = {
       loadingScreen: document.getElementById("loadingScreen"),
@@ -915,7 +1170,16 @@
       resultCorrect: document.getElementById("resultCorrect"),
       resultCoins: document.getElementById("resultCoins"),
       resultPotions: document.getElementById("resultPotions"),
-      restartBtn: document.getElementById("restartBtn")
+      restartBtn: document.getElementById("restartBtn"),
+      endingCutscene: document.getElementById("endingCutscene"),
+      endingImage: document.getElementById("endingImage"),
+      endingTitle: document.getElementById("endingTitle"),
+      endingChapter: document.getElementById("endingChapter"),
+      endingNarration: document.getElementById("endingNarration"),
+      endingLine: document.getElementById("endingLine"),
+      endingDots: document.getElementById("endingDots"),
+      endingContent: document.getElementById("endingContent"),
+      endingComplete: document.getElementById("endingComplete")
     };
 
     function showScreen(name) {
@@ -923,6 +1187,67 @@
         screen.classList.remove("active");
       });
       els[name].classList.add("active");
+    }
+
+    function renderEndingSlide() {
+      const slide = endingSlides[endingIndex];
+      els.endingImage.style.opacity = "0";
+
+      window.setTimeout(() => {
+        els.endingImage.src = slide.image;
+        els.endingChapter.textContent = slide.chapter;
+        els.endingNarration.textContent = slide.narration;
+        els.endingLine.textContent = slide.line;
+        els.endingLine.hidden = !slide.line;
+        els.endingDots.innerHTML = endingSlides.map((_, index) => (
+          `<span class="ending-dot${index === endingIndex ? " active" : ""}"></span>`
+        )).join("");
+        els.endingImage.style.opacity = "1";
+      }, 180);
+    }
+
+    function startEndingCutscene() {
+      endingIndex = 0;
+      endingLocked = false;
+      els.endingCutscene.classList.remove("fade-out");
+      els.endingComplete.classList.remove("show");
+      els.endingContent.hidden = false;
+      els.endingCutscene.classList.add("show");
+      renderEndingSlide();
+    }
+
+    function finishEndingCutscene() {
+      endingLocked = true;
+      els.endingContent.hidden = true;
+      els.endingComplete.classList.add("show");
+
+      window.setTimeout(() => {
+        els.endingCutscene.classList.add("fade-out");
+      }, 2300);
+
+      window.setTimeout(() => {
+        els.endingCutscene.classList.remove("show", "fade-out");
+        els.endingComplete.classList.remove("show");
+        els.endingContent.hidden = false;
+        els.endPanel.classList.remove("game-over");
+        els.endTitle.textContent = "冒險完成";
+        els.endMessage.textContent = "感謝你的旅程。";
+        renderResults();
+        showScreen("endScreen");
+        endingLocked = false;
+      }, 3100);
+    }
+
+    function advanceEndingCutscene() {
+      if (!els.endingCutscene.classList.contains("show") || endingLocked) return;
+
+      if (endingIndex >= endingSlides.length - 1) {
+        finishEndingCutscene();
+        return;
+      }
+
+      endingIndex += 1;
+      renderEndingSlide();
     }
 
     function parseCsv(text) {
@@ -1229,7 +1554,7 @@
       els.endTitle.textContent = "通關成功！";
       els.endMessage.textContent = "巫師擊敗魔王，完成全部 5 個關卡。";
       renderResults();
-      showScreen("endScreen");
+      startEndingCutscene();
     }
 
     function showGameOver() {
@@ -1334,6 +1659,13 @@
       showScreen("loadingScreen");
       els.loadingText.textContent = "重新整理冒險狀態中";
       setTimeout(startGame, 350);
+    });
+    els.endingCutscene.addEventListener("click", advanceEndingCutscene);
+    window.addEventListener("keydown", (event) => {
+      if ((event.key === "Enter" || event.key === " ") && els.endingCutscene.classList.contains("show")) {
+        event.preventDefault();
+        advanceEndingCutscene();
+      }
     });
 
     loadQuestions();
