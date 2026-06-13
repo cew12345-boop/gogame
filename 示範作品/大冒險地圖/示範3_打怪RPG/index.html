@@ -1032,7 +1032,7 @@
         <p class="ending-line" id="endingLine"></p>
       </div>
       <div class="ending-footer">
-        <span>點擊前往下一幕</span>
+        <span id="endingPrompt">點擊繼續冒險</span>
         <div class="ending-dots" id="endingDots" aria-hidden="true"></div>
       </div>
     </div>
@@ -1133,6 +1133,8 @@
 
     let endingIndex = 0;
     let endingLocked = false;
+    let endingIsFinal = false;
+    let endingNextAction = null;
 
     const els = {
       loadingScreen: document.getElementById("loadingScreen"),
@@ -1178,6 +1180,7 @@
       endingNarration: document.getElementById("endingNarration"),
       endingLine: document.getElementById("endingLine"),
       endingDots: document.getElementById("endingDots"),
+      endingPrompt: document.getElementById("endingPrompt"),
       endingContent: document.getElementById("endingContent"),
       endingComplete: document.getElementById("endingComplete")
     };
@@ -1202,18 +1205,37 @@
         els.endingDots.innerHTML = endingSlides.map((_, index) => (
           `<span class="ending-dot${index === endingIndex ? " active" : ""}"></span>`
         )).join("");
+        els.endingPrompt.textContent = endingIsFinal ? "點擊完成旅程" : "點擊繼續冒險";
         els.endingImage.style.opacity = "1";
       }, 180);
     }
 
-    function startEndingCutscene() {
-      endingIndex = 0;
+    function startEndingCutscene(slideIndex, options = {}) {
+      endingIndex = slideIndex;
       endingLocked = false;
+      endingIsFinal = Boolean(options.final);
+      endingNextAction = options.onComplete || null;
       els.endingCutscene.classList.remove("fade-out");
       els.endingComplete.classList.remove("show");
       els.endingContent.hidden = false;
       els.endingCutscene.classList.add("show");
       renderEndingSlide();
+    }
+
+    function closeEndingCutscene() {
+      endingLocked = true;
+      els.endingCutscene.classList.add("fade-out");
+
+      window.setTimeout(() => {
+        const nextAction = endingNextAction;
+        els.endingCutscene.classList.remove("show", "fade-out");
+        els.endingComplete.classList.remove("show");
+        els.endingContent.hidden = false;
+        endingLocked = false;
+        endingNextAction = null;
+        endingIsFinal = false;
+        if (nextAction) nextAction();
+      }, 720);
     }
 
     function finishEndingCutscene() {
@@ -1241,13 +1263,12 @@
     function advanceEndingCutscene() {
       if (!els.endingCutscene.classList.contains("show") || endingLocked) return;
 
-      if (endingIndex >= endingSlides.length - 1) {
+      if (endingIsFinal) {
         finishEndingCutscene();
         return;
       }
 
-      endingIndex += 1;
-      renderEndingSlide();
+      closeEndingCutscene();
     }
 
     function parseCsv(text) {
@@ -1454,16 +1475,21 @@
 
     function defeatMonster() {
       const reward = randomInt(20, 50);
+      const defeatedLevel = state.level;
+      const isFinalLevel = defeatedLevel >= monsters.length - 1;
       updateCoin(state.coins + reward);
       els.feedback.classList.remove("bad");
-      els.feedback.textContent = `${monsters[state.level].name} 被打倒！額外獲得 ${reward} 金幣。`;
+      els.feedback.textContent = `${monsters[defeatedLevel].name} 被打倒！額外獲得 ${reward} 金幣。`;
       updateAllUi();
       setTimeout(() => {
-        if (state.level >= monsters.length - 1) {
-          showVictory();
-        } else {
-          openShop(reward);
+        if (isFinalLevel) {
+          localStorage.setItem("cert_warrior", "true");
         }
+
+        startEndingCutscene(defeatedLevel, {
+          final: isFinalLevel,
+          onComplete: isFinalLevel ? null : () => openShop(reward)
+        });
       }, 1000);
     }
 
@@ -1551,10 +1577,10 @@
     function showVictory() {
       localStorage.setItem("cert_warrior", "true");
       els.endPanel.classList.remove("game-over");
-      els.endTitle.textContent = "通關成功！";
-      els.endMessage.textContent = "巫師擊敗魔王，完成全部 5 個關卡。";
+      els.endTitle.textContent = "冒險完成";
+      els.endMessage.textContent = "感謝你的旅程。";
       renderResults();
-      startEndingCutscene();
+      showScreen("endScreen");
     }
 
     function showGameOver() {
