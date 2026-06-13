@@ -1475,21 +1475,16 @@
 
     function defeatMonster() {
       const reward = randomInt(20, 50);
-      const defeatedLevel = state.level;
-      const isFinalLevel = defeatedLevel >= monsters.length - 1;
       updateCoin(state.coins + reward);
       els.feedback.classList.remove("bad");
-      els.feedback.textContent = `${monsters[defeatedLevel].name} 被打倒！額外獲得 ${reward} 金幣。`;
+      els.feedback.textContent = `${monsters[state.level].name} 被打倒！額外獲得 ${reward} 金幣。`;
       updateAllUi();
       setTimeout(() => {
-        if (isFinalLevel) {
-          localStorage.setItem("cert_warrior", "true");
+        if (state.level >= monsters.length - 1) {
+          showVictory();
+        } else {
+          openShop(reward);
         }
-
-        startEndingCutscene(defeatedLevel, {
-          final: isFinalLevel,
-          onComplete: isFinalLevel ? null : () => openShop(reward)
-        });
       }, 1000);
     }
 

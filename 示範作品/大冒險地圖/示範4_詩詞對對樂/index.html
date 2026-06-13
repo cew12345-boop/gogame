@@ -525,6 +525,7 @@
     }
 
     function showFinish() {
+      localStorage.setItem("cert_poetry", "true");
       finishScore.textContent = `總共嘗試 ${attempts} 次，成功配對 ${poems.length} 首詩詞。`;
       finishOverlay.classList.add("show");
     }
