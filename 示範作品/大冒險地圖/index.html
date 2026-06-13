@@ -84,14 +84,93 @@
     }
 
     .story-screen img {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
+    .story-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.22) 48%, rgba(0, 0, 0, 0.5)),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 34%, rgba(0, 0, 0, 0.7));
+      pointer-events: none;
+    }
+
+    .story-copy {
+      position: relative;
+      z-index: 1;
+      justify-self: start;
+      align-self: end;
+      width: min(720px, calc(100% - 32px));
+      max-height: calc(100svh - 112px);
+      margin: 0 0 clamp(70px, 10vh, 118px) clamp(16px, 6vw, 88px);
+      overflow: auto;
+      padding: clamp(18px, 3vw, 28px);
+      border: 1px solid rgba(255, 236, 174, 0.32);
+      border-radius: 8px;
+      color: #fff8dc;
+      background: rgba(8, 10, 13, 0.58);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(5px);
+    }
+
+    .story-title {
+      margin: 0 0 8px;
+      color: #ffeaa3;
+      font-size: clamp(1.9rem, 5vw, 4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .story-chapter {
+      margin: 0 0 16px;
+      color: rgba(255, 238, 174, 0.94);
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      line-height: 1.15;
+    }
+
+    .story-label {
+      display: inline-block;
+      margin: 12px 0 5px;
+      color: #ffeaa3;
+      font-size: 0.95rem;
+      font-weight: 900;
+    }
+
+    .story-scene,
+    .story-narration,
+    .story-line {
+      margin: 0;
+      white-space: pre-line;
+      line-height: 1.7;
+      font-weight: 800;
+    }
+
+    .story-scene {
+      color: rgba(255, 248, 220, 0.82);
+      font-size: clamp(0.92rem, 1.8vw, 1.06rem);
+    }
+
+    .story-narration {
+      color: rgba(255, 248, 220, 0.94);
+      font-size: clamp(1rem, 2.1vw, 1.2rem);
+    }
+
+    .story-line {
+      color: #fff0a8;
+      font-size: clamp(1.04rem, 2.4vw, 1.35rem);
+    }
+
     .story-hint {
       position: absolute;
+      z-index: 2;
       left: 50%;
       bottom: clamp(18px, 5vh, 54px);
       transform: translateX(-50%);
@@ -558,6 +637,14 @@
       .slots {
         grid-template-columns: 1fr;
       }
+
+      .story-copy {
+        justify-self: center;
+        width: calc(100% - 24px);
+        max-height: calc(100svh - 92px);
+        margin: 0 0 68px;
+        padding: 16px;
+      }
     }
   </style>
 </head>
@@ -568,6 +655,16 @@
 
   <div class="story-screen" id="storyScreen" aria-live="polite">
     <img id="storyImage" src="page1.png" alt="">
+    <article class="story-copy">
+      <h2 class="story-title" id="storyTitle">群星歸途</h2>
+      <h3 class="story-chapter" id="storyChapter">第一張｜風止之地</h3>
+      <span class="story-label">場景</span>
+      <p class="story-scene" id="storyScene"></p>
+      <span class="story-label">旁白</span>
+      <p class="story-narration" id="storyNarration"></p>
+      <span class="story-label" id="storyLineLabel">角色台詞</span>
+      <p class="story-line" id="storyLine"></p>
+    </article>
     <div class="story-hint" id="storyHint">點擊進入關卡</div>
   </div>
 
@@ -628,6 +725,7 @@
 
       <section class="complete" id="completeView" aria-live="polite">
         <h2>🏆 冒險完成！</h2>
+        <p class="time">感謝你的旅程。</p>
         <div class="time" id="adventureTime">總冒險時長：00 分 00 秒</div>
         <button class="again-btn" id="again" type="button">再次冒險</button>
       </section>
@@ -642,10 +740,48 @@
       { key: "cert_poetry", type: "poetry", name: "詩詞之印", emoji: "📜" }
     ];
 
+    const storyPages = {
+      "page1.png": {
+        chapter: "第一張｜風止之地",
+        scene: "最終決戰結束後的古老遺跡。\n\n斷裂的石柱傾倒在焦黑的大地上，殘存的魔法光芒如星塵般緩緩消散。夕陽穿過厚重雲層，照亮滿目瘡痍的戰場。\n\n主角獨自站在高崖邊緣，俯瞰這片曾經改變世界命運的地方。",
+        narration: "曾經震耳欲聾的戰吼，\n如今只剩風聲。\n\n世界終於記起了安靜的模樣。",
+        line: "「原來終點，\n也會這麼平靜。」"
+      },
+      "page2.png": {
+        chapter: "第二張｜燈火再明",
+        scene: "經歷漫長黑暗後的村莊重現生機。\n\n街道兩旁掛起暖黃色燈火，花朵重新盛開。孩子們在石板路上追逐嬉戲，商人整理貨架，老人坐在門前閒談。\n\n主角披著斗篷從人群中緩緩走過，卻沒有人認出他。",
+        narration: "有些故事被寫進史冊。\n\n有些故事，\n只留在人們安穩的日常裡。",
+        line: ""
+      },
+      "page3.png": {
+        chapter: "第三張｜群山回聲",
+        scene: "鏡頭拉遠。\n\n廣闊的大陸展現在眼前。\n\n森林恢復翠綠，河流重新奔流，遠方高塔映照晨曦。白雲緩慢飄過山脈，萬物回到原本的節奏。",
+        narration: "山依舊矗立。\n\n河依舊流淌。\n\n世界從未因誰而停止轉動。",
+        line: "「真好啊……」"
+      },
+      "page4.png": {
+        chapter: "第四張｜旅人未停",
+        scene: "蜿蜒山路通往未知遠方。\n\n晨霧覆蓋群山，石板古道延伸至天際。主角背著行囊獨自行走，披風在山風中微微飄動。\n\n沒有城鎮，沒有夥伴。\n\n只有前方尚未命名的道路。",
+        narration: "旅程從來不是為了抵達。\n\n而是在一次次離開之後，\n仍願意繼續前行。",
+        line: "「下一個故事，\n會在哪裡等我呢？」"
+      },
+      "page5.png": {
+        chapter: "第五張｜新的地平線",
+        scene: "主角站在世界盡頭的高崖。\n\n遠方海面反射著初升朝陽。\n\n漂浮島嶼懸掛天空，未知大陸隱約浮現在雲海彼端。金色光芒穿透雲層，照亮未曾被探索的世界。\n\n主角靜靜凝望遠方。",
+        narration: "每個傳說都會迎來結束。\n\n而每個結束，\n都只是另一段冒險的序章。",
+        line: "「那麼，\n我們再出發吧。」"
+      }
+    };
+
     const coverScreen = document.querySelector("#coverScreen");
     const storyScreen = document.querySelector("#storyScreen");
     const storyImage = document.querySelector("#storyImage");
     const storyHint = document.querySelector("#storyHint");
+    const storyChapter = document.querySelector("#storyChapter");
+    const storyScene = document.querySelector("#storyScene");
+    const storyNarration = document.querySelector("#storyNarration");
+    const storyLine = document.querySelector("#storyLine");
+    const storyLineLabel = document.querySelector("#storyLineLabel");
     const heldCount = document.querySelector("#heldCount");
     const modal = document.querySelector("#doorModal");
     const doorGame = document.querySelector("#doorGame");
@@ -702,8 +838,15 @@
     });
 
     function showStoryPage(imageSrc, hint, onComplete) {
+      const story = storyPages[imageSrc];
       storyAction = onComplete;
       storyImage.src = imageSrc;
+      storyChapter.textContent = story.chapter;
+      storyScene.textContent = story.scene;
+      storyNarration.textContent = story.narration;
+      storyLine.textContent = story.line;
+      storyLine.hidden = !story.line;
+      storyLineLabel.hidden = !story.line;
       storyHint.textContent = hint;
       storyScreen.classList.remove("fade");
       storyScreen.classList.add("show");
